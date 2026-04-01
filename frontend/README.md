@@ -3,16 +3,6 @@
 A full-stack Resume Builder application with user authentication.  
 This project includes a backend built with Node.js/Express and a frontend built with React.
 
-
-## 🚀 Features
-
-### 🔐 Authentication (Backend)
-- User Registration (with hashed passwords using bcrypt)
-- User Login (JWT-based authentication)
-- Logout with token blacklisting
-- Protected routes using middleware
-- Get current logged-in user (`getMe` API)
-
 ### 🌐 Frontend
 - Login & Register UI
 - Auth API integration
@@ -22,15 +12,6 @@ This project includes a backend built with Node.js/Express and a frontend built 
 ---
 
 ## 🛠️ Tech Stack
-
-### Backend
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
-- JWT (jsonwebtoken)
-- bcryptjs
-- cookie-parser
 
 ### Frontend
 - React

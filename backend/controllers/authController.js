@@ -15,6 +15,7 @@ const jwt = require("jsonwebtoken");
 
 const registerUserController = async (req, res) => {
   const { username, email, password } = req.body;
+  console.log(req.body)
 
   if (!username || !email || !password) {
     return res.status(400).json({
@@ -93,6 +94,12 @@ const loginUserController = async (req, res) => {
     })
 }
 
+/**
+ * @name loginUserController
+ * @description clear the token from cookie and add it in blacklist
+ * @access public
+ */
+
 const logoutUserController = async(req,res) =>{
     const token = req.cookies.token
 
@@ -105,6 +112,24 @@ const logoutUserController = async(req,res) =>{
     })
 
 }
- 
 
-module.exports = { registerUserController,loginUserController,logoutUserController };
+
+/**
+ * @route getMeController
+ * @description get the logged in user details
+ * @access private
+ */
+
+const getMeController = async(req,res) =>{
+  const user = await userModel.findById(req.user.id) // user.id = req.user from the authMiddleware
+  res.status(200).json({
+    message : "User details fetched successfully",
+    user:{
+      id : user._id,
+      username: user.username,
+      email: user.email
+    }
+  })
+}
+
+module.exports = { registerUserController,loginUserController,logoutUserController,getMeController };
