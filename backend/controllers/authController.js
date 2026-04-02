@@ -95,7 +95,7 @@ const loginUserController = async (req, res) => {
 }
 
 /**
- * @name loginUserController
+ * @name logoutUserController
  * @description clear the token from cookie and add it in blacklist
  * @access public
  */
