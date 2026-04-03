@@ -8,7 +8,7 @@ This project includes:
 * **Protected Routes (Frontend + Backend)**
 * **Global Loading State**
 * **Centralized Axios API Instance**
-* Structured **AI Interview Analysis Schema**
+* Structured **AI Interview Analysis System**
 
 ---
 
@@ -20,6 +20,8 @@ This project includes:
 * JWT (jsonwebtoken)
 * bcryptjs
 * Axios
+* Gemini API (@google/genai)
+* Zod (Schema Validation)
 
 ---
 
@@ -37,8 +39,6 @@ This project includes:
 ### 🛡️ Protected Routes
 
 #### Frontend (`Protected.jsx`)
-
-* Restricts access to authenticated users only
 
 ```js
 if (!user) {
@@ -59,14 +59,6 @@ return children;
 ### ⏳ Loading State
 
 * Global loading handled via Context
-* Used during:
-
-  * Login
-  * Register
-  * Logout
-  * Fetching user (`getMe`)
-
-Example:
 
 ```js
 setLoading(true);
@@ -78,8 +70,6 @@ setLoading(false);
 
 ### 🌐 Axios API Instance
 
-Centralized Axios configuration:
-
 ```js
 const api = axios.create({
   baseURL: "http://localhost:10000",
@@ -87,151 +77,123 @@ const api = axios.create({
 });
 ```
 
-## 🧠 AI Interview Analysis Schema
+---
 
-### 📊 Structure
+## 🧠 AI Interview Analysis System
+
+### 📊 Data Structure
 
 ```js
 {
   jobDescription: String,
-  resumeText: String,
+  resume: String,
   selfDescription: String,
-
   matchScore: Number,
-
-  technicalQuestions: [
-    {
-      question: String,
-      answer: String,
-      intention: String
-    }
-  ],
-
-  behavioralQuestions: [
-    {
-      question: String,
-      answer: String,
-      intention: String
-    }
-  ],
-
-  skillGaps: [
-    {
-      skill: String,
-      severity: {
-        type: String,
-        enum: ["low", "medium", "high"]
-      }
-    }
-  ],
-
-  preparationPlans: [
-    {
-      day: Number,
-      focus: String,
-      tasks: [String]
-    }
-  ]
+  technicalQuestions: [{ question, answer, intention }],
+  behavioralQuestions: [{ question, answer, intention }],
+  skillGaps: [{ skill, severity }],
+  preparationPlan: [{ day, focus, tasks }],
+  title: String
 }
 ```
 
 ---
+## AI Response Schema Issue & Fix (Important)
+❌ Problem
 
-## 🎯 Purpose
+While integrating the AI interview analysis using @google/genai, the API response did not match the expected schema.
 
-* Evaluate candidate-job fit (**matchScore**)
-* Generate **technical & behavioral questions**
-* Identify **skill gaps**
-* Provide **structured preparation plan**
+Instead of getting:
 
----
+{
+  matchScore,
+  technicalQuestions,
+  behavioralQuestions,
+  skillGaps,
+  preparationPlan
+}
 
-## ⚠️ Fixes Implemented
+We were receiving unrelated fields like:
 
-* Fixed **400 Bad Request**
-* Fixed **401 Unauthorized (cookies not sent)**
-* Enabled:
+{
+  interviewId,
+  strengths,
+  overallRecommendation,
+  redFlags,
+  notes
+}
 
-  * `withCredentials` in Axios
-  * `credentials: true` in CORS
-* Added `cookie-parser`
-* Created reusable Axios instance (`api`)
-* Added Protected Routes
-* Implemented global loading state
-* Fixed inconsistent API response keys
+👉 This clearly indicated that the AI model was ignoring our schema definition.
 
----
+🔍 Root Cause
 
-## 🛠️ Setup
+The issue was caused by Zod v4 incompatibility with zod-to-json-schema.
 
-### Backend
+Installed versions:
 
-```bash
-cd backend
-npm install
-npm run start
-```
+zod@4.3.6
+zod-to-json-schema@3.25.2
 
-`.env`:
+When converting schema:
 
-```
-PORT=10000
-MONGO_URI=your_uri
-JWT_SECRET=your_secret
-```
+zodToJsonSchema(interviewReportSchema)
 
----
+Output was:
 
-### Frontend
+{
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+⚠️ This means the schema was empty, so Gemini had no structure to follow → it generated a generic response.
 
----
+## Fix Implemented
 
-## 📈 Future Improvements (Next Phase)
+Downgraded to compatible versions:
 
-### 🧠 Interview Backend
+npm install zod@3.23.8 zod-to-json-schema@3.23.5
 
-* Create **Interview Schema** with:
+Now schema conversion works correctly:
 
-  * Job Description, Resume, Self Description
-  * Match Score
-  * Technical & Behavioral Questions
-  * Skill Gaps
-  * Preparation Plan
-  * Link to User
+const { zodToJsonSchema } = require("zod-to-json-schema");
 
----
+responseSchema: zodToJsonSchema(interviewReportSchema)
+🧪 Verification Step
 
-### 🔗 Routes (`/api/interview`)
+Added temporary debug:
 
-* `POST /create` → Create interview
-* `GET /` → Get all user interviews
-* `GET /:id` → Get single interview
-* `DELETE /:id` → Delete interview
+console.log(JSON.stringify(zodToJsonSchema(interviewReportSchema), null, 2));
 
----
+✔️ Confirmed schema now includes:
 
-### ⚙️ Controllers
+matchScore
+technicalQuestions
+behavioralQuestions
+skillGaps
+preparationPlan
+title
+🎉 Final Result
 
-* Create interview & save data
-* Fetch all (user-specific)
-* Fetch single interview
-* Delete interview
+AI now returns properly structured data:
 
----
+{
+  matchScore: 92,
+  technicalQuestions: [...],
+  behavioralQuestions: [...],
+  skillGaps: [...],
+  preparationPlan: [...],
+  title: "Senior Frontend Engineer"
+}
+⚠️ Note
 
-### 🔒 Security
+If you see [Array] in console logs:
 
-* Protect routes with auth middleware
-* Ensure users access only their data
+tasks: [Array]
 
----
+👉 That’s just Node.js truncating nested output.
 
-### 🎯 Goal
+Use this to view full data:
 
-Build a system where users input job + resume and get structured interview analysis.
+console.log(JSON.stringify(response, null, 2));
+💡 Key Takeaway
+
+If your AI ignores schema → always verify schema conversion output first.
