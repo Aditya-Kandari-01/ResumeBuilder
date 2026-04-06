@@ -9,15 +9,17 @@ const app = express()
 app.use(express.json())
 app.use(cookieParser())
 
-app.use(cors({
+app.use(cors({ 
     origin:"http://localhost:5173",
     credentials:true
 }))
+
 // Require all the routes here
 const auth = require("../routes/auth")
+const interviewRouter = require("../routes/interviewRoutes")
 
 // Using all the routes here
 app.use("/api/auth",auth)
-
+app.use("/api/interview",interviewRouter)
 
 module.exports = app

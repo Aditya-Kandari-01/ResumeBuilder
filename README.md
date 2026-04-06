@@ -1,199 +1,199 @@
-# 🔐 Authentication + Protected Routes + AI Interview System (MERN)
+# 🎯 AI Interview Prep
 
-## 📌 Overview
-
-This project includes:
-
-* Full **Authentication System (JWT + Cookies)**
-* **Protected Routes (Frontend + Backend)**
-* **Global Loading State**
-* **Centralized Axios API Instance**
-* Structured **AI Interview Analysis System**
+> A full-stack web application that generates personalized AI-powered interview preparation reports based on your resume, self-description, and target job description.
 
 ---
 
-## ⚙️ Tech Stack
+## 📸 Screenshots
 
-* React (Context API)
-* Node.js + Express
-* MongoDB + Mongoose
-* JWT (jsonwebtoken)
-* bcryptjs
-* Axios
-* Gemini API (@google/genai)
-* Zod (Schema Validation)
+### Home Page — `http://localhost:5173`
+![Home Page](./screenshots/home.png)
 
----
+### Interview Report Technical Question Page — `http://localhost:5173/interview/abc`
+![Interview Report](./screenshots/road.png)
 
-## 🚀 Features
+### Interview Report Behavioral Question Page — `http://localhost:5173/interview/abc`
+![Interview Report](./screenshots/behave.png)
 
-### 🔐 Authentication
+### Interview Report Roadmap Page— `http://localhost:5173/interview/abc`
+![Interview Report](./screenshots/tech.png)
 
-* User Registration & Login
-* JWT stored in **HTTP-only cookies**
-* Persistent login using `/get-me`
-* Logout with token invalidation
 
 ---
 
-### 🛡️ Protected Routes
+## 🛠️ Tech Stack
 
-#### Frontend (`Protected.jsx`)
+| Layer | Technologies |
+|-------|-------------|
+| Backend | Node.js, Express, Multer, pdf-parse, Mongoose |
+| Frontend | React, Axios, Custom Hooks (useAuth) |
+| AI | AI service via `generateInterviewReport()` |
+| Database | MongoDB via `interviewReportModel` |
+| Auth | JWT via `authMiddleware` |
+
+---
+
+## ⚙️ Backend
+
+### Controllers — `interviewController.js`
+
+| Controller | Description |
+|------------|-------------|
+| `generateReportController` | Accepts resume PDF + `selfDescription` + `jobDescription`, parses PDF text, calls AI service, saves report to DB |
+| `getReportByIdController` | Fetches a single report by `interviewId`, scoped to the logged-in user |
+| `getAllReportsController` | Returns all reports for the user, sorted newest-first, with heavy fields excluded for performance |
+
+#### PDF Parsing
+
+Multer stores the uploaded PDF in memory (`req.file.buffer`). To extract text from it:
 
 ```js
-if (!user) {
-  return <Navigate to="/login" />;
-}
-return children;
+const resumeContent = await (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText()
+```
+
+> **Fix:** `pdfParse` is not directly callable as a function — it must be instantiated with `new pdfParse.PDFParse(...)`.
+
+---
+
+### Routes — `interviewRoutes.js`
+
+| Method | Route | Description | Access |
+|--------|-------|-------------|--------|
+| `POST` | `/api/interview/` | Generate a new interview report (requires resume upload) | Private |
+| `GET` | `/api/interview/report/:interviewId` | Get a specific report by ID | Private |
+| `GET` | `/api/interview/` | Get all reports for the logged-in user | Private |
+
+All routes are protected by `authMiddleware.authUser`.
+
+---
+
+### File Upload Middleware — `fileMiddleware.js`
+
+Uses Multer with in-memory storage so uploaded PDFs never touch the filesystem:
+
+```js
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
+})
 ```
 
 ---
 
-#### Backend Middleware
+## 🖥️ Frontend
 
-* Verifies JWT from cookies
-* Returns **401 Unauthorized** if invalid/missing
+### Home.jsx
 
----
+- Displays existing interview report cards (summary view — heavy fields excluded)
+- Quick navigation to generate a new report
+- Shows user account information
+- UI built with design inspiration from Google Stitch; hooks & state management done manually
 
-### ⏳ Loading State
+### Auth Bug Fix
 
-* Global loading handled via Context
+Two errors were occurring on page load:
 
-```js
-setLoading(true);
-// API call
-setLoading(false);
+```
+401 Unauthorized — /api/auth/get-me
+TypeError: Cannot read properties of undefined (reading 'user')
 ```
 
+**Root cause:** The auth token was not being attached to outgoing requests.  
+**Fix:** Ensured the token is included in request headers before calling `getMe()`, and added a null-check on the response before accessing `response.user`.
+
+### interviewApi.js
+
+Centralizes all interview-related API calls:
+- Generate a new report
+- Fetch a report by ID
+- Fetch all reports for the logged-in user
+
 ---
 
-### 🌐 Axios API Instance
+## 🗄️ Schema Update
+
+Added a missing required field to `interviewReportSchema`:
 
 ```js
-const api = axios.create({
-  baseURL: "http://localhost:10000",
-  withCredentials: true
-});
-```
-
----
-
-## 🧠 AI Interview Analysis System
-
-### 📊 Data Structure
-
-```js
-{
-  jobDescription: String,
-  resume: String,
-  selfDescription: String,
-  matchScore: Number,
-  technicalQuestions: [{ question, answer, intention }],
-  behavioralQuestions: [{ question, answer, intention }],
-  skillGaps: [{ skill, severity }],
-  preparationPlan: [{ day, focus, tasks }],
-  title: String
+title: {
+  type: String,
+  required: [true, "Job title is required"]
 }
 ```
 
+This stores the job title for display on report cards in the dashboard.
+
 ---
-## AI Response Schema Issue & Fix (Important)
-❌ Problem
 
-While integrating the AI interview analysis using @google/genai, the API response did not match the expected schema.
+## 🚀 Getting Started
 
-Instead of getting:
+### Prerequisites
+- Node.js
+- MongoDB
+- npm
 
-{
-  matchScore,
-  technicalQuestions,
-  behavioralQuestions,
-  skillGaps,
-  preparationPlan
-}
+### Installation
 
-We were receiving unrelated fields like:
+```bash
+# Clone the repo
+git clone https://github.com/your-username/ai-interview-prep.git
+cd ai-interview-prep
 
-{
-  interviewId,
-  strengths,
-  overallRecommendation,
-  redFlags,
-  notes
-}
+# Install backend dependencies
+cd backend
+npm install
 
-👉 This clearly indicated that the AI model was ignoring our schema definition.
+# Install frontend dependencies
+cd ../frontend
+npm install
+```
 
-🔍 Root Cause
+### Running the App
 
-The issue was caused by Zod v4 incompatibility with zod-to-json-schema.
+```bash
+# Start backend
+cd backend
+npm run dev
 
-Installed versions:
+# Start frontend
+cd frontend
+npm run dev
+```
 
-zod@4.3.6
-zod-to-json-schema@3.25.2
+Backend runs on `http://localhost:10000`  
+Frontend runs on `http://localhost:5173`
 
-When converting schema:
+---
 
-zodToJsonSchema(interviewReportSchema)
+## 📁 API Reference
 
-Output was:
+### Generate Interview Report
+```
+POST /api/interview/
+Content-Type: multipart/form-data
+Authorization: Bearer <token>
 
-{
-  "$schema": "http://json-schema.org/draft-07/schema#"
-}
+Body:
+  - resume        (file)    PDF resume
+  - selfDescription (text)  Brief self-introduction
+  - jobDescription  (text)  Target job description
+```
 
-⚠️ This means the schema was empty, so Gemini had no structure to follow → it generated a generic response.
+### Get Report by ID
+```
+GET /api/interview/report/:interviewId
+Authorization: Bearer <token>
+```
 
-## Fix Implemented
+### Get All Reports
+```
+GET /api/interview/
+Authorization: Bearer <token>
+```
 
-Downgraded to compatible versions:
 
-npm install zod@3.23.8 zod-to-json-schema@3.23.5
-
-Now schema conversion works correctly:
-
-const { zodToJsonSchema } = require("zod-to-json-schema");
-
-responseSchema: zodToJsonSchema(interviewReportSchema)
-🧪 Verification Step
-
-Added temporary debug:
-
-console.log(JSON.stringify(zodToJsonSchema(interviewReportSchema), null, 2));
-
-✔️ Confirmed schema now includes:
-
-matchScore
-technicalQuestions
-behavioralQuestions
-skillGaps
-preparationPlan
-title
-🎉 Final Result
-
-AI now returns properly structured data:
-
-{
-  matchScore: 92,
-  technicalQuestions: [...],
-  behavioralQuestions: [...],
-  skillGaps: [...],
-  preparationPlan: [...],
-  title: "Senior Frontend Engineer"
-}
-⚠️ Note
-
-If you see [Array] in console logs:
-
-tasks: [Array]
-
-👉 That’s just Node.js truncating nested output.
-
-Use this to view full data:
-
-console.log(JSON.stringify(response, null, 2));
-💡 Key Takeaway
-
-If your AI ignores schema → always verify schema conversion output first.
+## To upload the resume for now use postman
+http://localhost:10000//api/interview/
+image :- 
+### To send the post request to the page
+![Home Page](./screenshots/postman.png)

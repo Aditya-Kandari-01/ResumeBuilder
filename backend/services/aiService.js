@@ -105,7 +105,7 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
     `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -114,7 +114,7 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
     });
     // console.log(JSON.stringify(response, null, 2));
 
-    console.log(JSON.parse(response.text));
+    return JSON.parse(response.text)
   } catch (error) {
     console.error("Failed to generate interview report:", error);
     throw error;
