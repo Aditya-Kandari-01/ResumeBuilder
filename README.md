@@ -1,4 +1,4 @@
-# 🎯 AI Interview Prep
+# 🎯 ResumeBuilder(Report Generator)
 
 > A full-stack web application that generates personalized AI-powered interview preparation reports based on your resume, self-description, and target job description.
 
