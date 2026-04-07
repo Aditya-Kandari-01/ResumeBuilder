@@ -60,11 +60,7 @@ interview frontend integration with API, context, and hooks
 
 ---
 
-## Current Focus
-
-- Connecting frontend UI with backend APIs
-- Handling file uploads properly
-- Managing navigation after report generation
-- Improving state handling with context and hooks
-
+## Fixed error while integrating frontend and backend to showcase the generated output
+-useInterview.js:32 AxiosError: Request failed with status code 500 at settle (settle.js:20:7) at XMLHttpRequest.onloadend (xhr.js:62:9) at Axios$1.request (Axios.js:46:41) at async generateInterviewReport (interviewApi.js:21:22) at async generateReport (useInterview.js:25:24) at async handleGenerateReport (Home.jsx:15:22)
+-Home.jsx:16 undefined Home.jsx:17 Uncaught (in promise) TypeError: Cannot read properties of undefined (reading '_id') at handleGenerateReport (Home.jsx:17:37)
 ---
