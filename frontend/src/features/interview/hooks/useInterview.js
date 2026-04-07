@@ -1,13 +1,15 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import {
   getAllInterviewReports,
   getInterviewReportById,
   generateInterviewReport,
 } from "../services/interviewApi";
 import { InterviewContext } from "../InterviewContext";
+import { useParams } from "react-router";
 
 export const useInterview = () => {
   const context = useContext(InterviewContext);
+  const { interviewId } = useParams();
   if (!context) {
     throw new Error("useInterview must be within an InterviewProvider");
   }
@@ -28,35 +30,51 @@ export const useInterview = () => {
         resumeFile,
       });
       setReport(response.interviewReport);
+      return response.interviewReport;
     } catch (error) {
-        console.log(error)
+      console.log(error);
     } finally {
-        setLoading(false)
+      setLoading(false);
     }
   };
   const getReportById = async (interviewId) => {
     setLoading(true);
     try {
       const response = await getInterviewReportById(interviewId);
-      setReport(response.interviewReport);
+      setReport(response.report);
+      return response.report;
     } catch (error) {
-        console.log(error)
+      console.log(error);
     } finally {
-        setLoading(false)
+      setLoading(false);
     }
   };
-  const getAllReports = async () => {
+  const getReports = async () => {
     setLoading(true);
     try {
       const response = await getAllInterviewReports();
-      setReports(response.interviewReport);
+      setReports(response.reports);
+      return response.reports;
     } catch (error) {
-        console.log(error)
+      console.log(error);
     } finally {
-        setLoading(false)
+      setLoading(false);
     }
   };
+  useEffect(() => {
+    if (interviewId) {
+      getReportById(interviewId);
+    } else {
+      getReports();
+    }
+  },[interviewId]);
+
   return {
-    loading,report,reports,generateReport,getReportById,getAllReports
-  }
+    loading,
+    report,
+    reports,
+    generateReport,
+    getReportById,
+    getReports,
+  };
 };

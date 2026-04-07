@@ -12,8 +12,13 @@ const Home = () => {
 
     const handleGenerateReport = async() =>{
         const resume = resumeInputRef.current.files[0]
-        const data = await generateReport({jobDescription,selfDescription,resume})
+        const data = await generateReport({jobDescription,selfDescription,resumeFile: resume})
         navigate(`/interview/${data._id}`)
+    }
+    if(loading){
+        return(
+            <main className="loading-screen"><h1>Loading your interview plan...</h1></main>
+        )
     }
 
   return (
