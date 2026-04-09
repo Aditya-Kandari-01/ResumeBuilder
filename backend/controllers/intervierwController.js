@@ -8,7 +8,6 @@ const interviewReportModel = require("../models/interviewReportModel");
  * @description generate report based on user's selfDescription,resume and jobDescription
  */
 const generateReportController = async (req, res) => {
-  console.log("now u are in generate controller")
   const resumeContent = await (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText()
   const { selfDescription, jobDescription } = req.body;
   const interviewReportByAi = await generateInterviewReport({

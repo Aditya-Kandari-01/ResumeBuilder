@@ -39,3 +39,16 @@ export const getAllInterviewReports = async() =>{
     const response = await api.get("/api/interview/")
     return response.data
 }
+
+/**
+ * 
+ * @description to generate a refined resume for the user
+ */
+
+
+export const generateResumePdf = async({interviewReportId})=>{
+    const response = await api.post(`/api/interview/resume/pdf/${interviewReportId}`,null,{
+        responseType : "blob"
+    })
+    return response.data
+}

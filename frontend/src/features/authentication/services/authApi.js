@@ -18,8 +18,6 @@ const register = async ({ username, email, password }) => {
 
 const login = async ({ email, password }) => {
     try {
-        console.log("Sending:", { email, password });
-
         const response = await api.post("/api/auth/login", {
             email, password
         })
